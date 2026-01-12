@@ -1,0 +1,64 @@
+---
+name: 001-project-rules
+description: Learning Scheduler 프로젝트의 기술 스택, 아키텍처, 폴더 구조에 관한 규칙
+alwaysApply: true
+---
+
+# Overview
+
+이 프로젝트는 **Learning Scheduler**로, 학습 계획과 실행을 시각적으로 관리하는 타임라인 기반 웹 애플리케이션입니다.
+
+## 기술 스택
+
+### Frontend
+- **React.js** + **TypeScript**
+- **Tailwind CSS** (스타일링)
+- 모바일: React Native + WebView
+
+### Backend (Optional)
+- **Python** + **FastAPI**
+- 초기 단계: JSON Mock 데이터 사용
+- JSON Mock ↔ API Response 구조는 동일하게 유지
+
+## 아키텍처
+
+**Feature-Sliced Design (FSD)** 아키텍처를 따릅니다:
+
+```
+src/
+├─ app/              # 전역 Provider (theme, settings, snap 옵션 등), 라우팅
+├─ pages/            # 페이지 컴포넌트 (DayTimelinePage 등)
+├─ widgets/          # 독립적인 UI 블록 (Timeline 등)
+├─ features/         # 사용자 시나리오 (plan, execution, schedule-edit)
+├─ entities/         # 비즈니스 엔티티 (subject, date-event)
+└─ shared/           # 공통 코드 (ui, lib, types)
+```
+
+### 주요 폴더 역할
+
+- **pages/**: 전체 화면 단위 컴포넌트
+- **widgets/**: Timeline 같은 복합 UI 블록
+- **features/**: 드래그, 리사이즈, 생성 등 사용자 인터랙션 로직
+- **entities/**: 과목(subject), 대표 일정(date-event) 등 도메인 모델
+- **shared/**: 시간 계산, 겹침 계산 등 공통 유틸리티
+
+## 핵심 원칙
+
+1. **시간 계산 로직**은 `shared/lib`로 분리하여 재사용
+2. **겹침 계산**은 프론트엔드에서 단독 처리
+3. **WebView 환경**을 고려한 스와이프/드래그 충돌 방지 처리 필요
+4. **JSON Mock 구조**와 **API Response 구조**를 동일하게 유지 (마이그레이션 용이)
+
+## 코딩 스타일
+
+- TypeScript 사용 (타입 안정성)
+- Tailwind CSS 사용 (인라인 스타일 지양)
+- 컴포넌트는 기능별로 분리 (SRP 원칙)
+- 커스텀 훅으로 비즈니스 로직 분리 (`useCreate`, `useMove`, `useResize`, `useSnap`)
+
+## 확장 고려 사항
+
+향후 추가될 기능:
+- 주/월 단위 요약
+- 실행 패턴 분석
+- 달성률 히트맵

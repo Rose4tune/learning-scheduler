@@ -1,0 +1,77 @@
+{
+  "subjects": [
+    {
+      "id": "subject-1",
+      "name": "수학",
+      "color": "#3B82F6",
+      "icon": "📐",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "subject-2",
+      "name": "영어",
+      "color": "#10B981",
+      "icon": "📚",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "subject-3",
+      "name": "과학",
+      "color": "#8B5CF6",
+      "icon": "🔬",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "dateEvents": [
+    {
+      "id": "event-1",
+      "date": "2024-01-15",
+      "title": "중간고사 대비",
+      "description": "수학, 영어 집중 학습",
+      "isRepresentative": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "plans": [
+    {
+      "id": "plan-1",
+      "date": "2024-01-15",
+      "startTime": "09:00",
+      "endTime": "11:00",
+      "subjectId": "subject-1",
+      "memo": "미적분 문제 풀이"
+    },
+    {
+      "id": "plan-2",
+      "date": "2024-01-15",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "subjectId": "subject-2",
+      "memo": "영어 독해 연습"
+    }
+  ],
+  "executions": [
+    {
+      "id": "execution-1",
+      "date": "2024-01-15",
+      "startTime": "09:00",
+      "endTime": "10:30",
+      "subjectId": "subject-1",
+      "memo": "미적분 문제 30개 완료",
+      "achievement": 75
+    },
+    {
+      "id": "execution-2",
+      "date": "2024-01-15",
+      "startTime": "14:00",
+      "endTime": "15:45",
+      "subjectId": "subject-2",
+      "memo": "영어 독해 5지문 완료",
+      "achievement": 90
+    }
+  ]
+}
