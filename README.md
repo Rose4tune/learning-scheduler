@@ -7,6 +7,30 @@
 Learning Scheduler는 하루 단위로 학습 계획을 세우고 실행 기록을 타임라인으로 관리하는 애플리케이션입니다.
 Plan(계획)과 Execution(실행)을 분리하여 계획 대비 실행 결과를 시각적으로 비교할 수 있습니다.
 
+## 📸 스크린샷
+
+### 타임라인 메인 화면
+![타임라인 헤더](screenshots/header-view.png)
+
+**주요 기능:**
+- 날짜 및 대표 일정 표시
+- 계획/실행 시간 요약
+- 실시간 달성률 계산 (67%)
+
+### 일정 (블록 겹침 처리)
+![일정 블록](screenshots/initial-load.png)
+
+**특징:**
+- 시간이 겹치는 블록(수학, 한국사) 자동 수평 배치
+- 과목별 색상 및 아이콘 표시
+- 블록 hover 시 그림자 효과
+- 리사이즈 핸들 (상/하단)
+
+**달성률 배지:**
+- 🟢 80% 이상: 녹색
+- 🟡 50-79%: 노란색
+- 🔴 50% 미만: 빨간색
+
 ## 🛠 기술 스택
 
 ### Frontend
@@ -78,25 +102,17 @@ npm run preview
 
 ## 🎯 주요 기능
 
-### 현재 구현
-- ✅ Feature-Sliced Design 아키텍처 기반 폴더 구조
-- ✅ 타임라인 그리드 (24시간, 30분 단위)
-- ✅ Plan/Execution 2열 구조
-- ✅ Theme Provider (다크/라이트 모드 지원)
-- ✅ Settings Provider (스냅 설정 등)
-- ✅ 시간 계산 유틸리티
-- ✅ 겹침 계산 유틸리티
-- ✅ Mock 데이터 구조
+### ✅ 현재 기능
 
-### 향후 구현 예정
-- ⬜ 드래그로 계획 생성
-- ⬜ 드래그로 일정 이동
-- ⬜ 리사이즈로 시간 조정
-- ⬜ 30분 단위 스냅 기능
-- ⬜ 겹침 시각화
-- ⬜ 과목별 색상 표시
-- ⬜ 주/월 단위 요약
-- ⬜ 달성률 분석
+- **타임라인 뷰**: 24시간 그리드, Plan/Execution 2열 구조, 시간 겹침 자동 처리
+- **블록 편집**: 드래그로 생성/이동, 상하 리사이즈, 10분 단위 스냅
+- **시각화**: 과목별 색상/아이콘, 달성률 배지 (🟢80%+, 🟡50-79%, 🔴50%↓), 시간 요약
+- **데이터**: Mock API, Theme/Settings Provider
+
+### 🚧 향후 계획
+
+- 날짜 네비게이션 (스와이프, 캘린더)
+- FastAPI 백엔드 연동 (Optional)
 
 ## 📐 설계 원칙
 
@@ -115,7 +131,51 @@ npm run preview
 
 ## 📝 Mock 데이터
 
-초기 개발 단계에서는 `public/mock/data.json` 파일의 목업 데이터를 사용합니다.
+초기 개발 단계에서는 `public/mock/data.json` 파일의 Mock 데이터를 사용합니다.
+
+### 데이터 구조
+
+```json
+{
+  "subjects": [
+    {
+      "id": "subject-1",
+      "name": "수학",
+      "color": "#3B82F6",
+      "icon": "📐"
+    }
+  ],
+  "dateEvents": [
+    {
+      "id": "event-1",
+      "date": "2026-01-12",
+      "title": "중간고사 대비 주간",
+      "isRepresentative": true
+    }
+  ],
+  "plans": [
+    {
+      "id": "plan-1",
+      "date": "2026-01-12",
+      "startTime": "09:00",
+      "endTime": "11:30",
+      "subjectId": "subject-1",
+      "memo": "미적분 문제 풀이"
+    }
+  ],
+  "executions": [
+    {
+      "id": "execution-1",
+      "date": "2026-01-12",
+      "startTime": "09:15",
+      "endTime": "11:00",
+      "subjectId": "subject-1",
+      "achievement": 75
+    }
+  ]
+}
+```
+
 향후 FastAPI 백엔드와 연동 시 동일한 데이터 구조를 유지합니다.
 
 ## 🔧 개발 가이드
@@ -134,6 +194,36 @@ import { Plan } from '@/features/plan';
 - Props는 인터페이스로 정의
 - Tailwind CSS 클래스 사용 (인라인 스타일 지양)
 - 비즈니스 로직은 커스텀 훅으로 분리
+
+### 주요 커스텀 훅
+
+**데이터 관리:**
+- `useTimelineData(date)` - 날짜별 타임라인 데이터 로딩
+
+**레이아웃:**
+- `useOverlapLayout(blocks)` - 겹치는 블록 레이아웃 계산
+
+**인터랙션:**
+- `useCreate()` - 빈 영역 드래그로 블록 생성
+- `useMove()` - 블록 드래그 이동
+- `useResize()` - 블록 리사이즈
+- `useSnap()` - 스냅 기능 (10분 단위)
+
+### 주요 유틸리티 함수
+
+**시간 계산 (`@/shared/lib/time`):**
+```typescript
+timeToPixel(time: string): number      // "09:00" → 360px
+pixelToTime(pixel: number): string     // 360px → "09:00"
+getMinutesDifference(start, end): number
+formatDuration(minutes: number): string // 90 → "1시간 30분"
+```
+
+**겹침 계산 (`@/shared/lib/overlap`):**
+```typescript
+isOverlapping(block1, block2): boolean
+calculateOverlapLayout(blocks): Layout[]
+```
 
 ### 커밋 컨벤션
 
