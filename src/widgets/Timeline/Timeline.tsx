@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
 import { Grid } from './Grid';
 import { Column } from './Column';
-import { useTimelineData } from '@/shared/hooks';
+import { Plan } from '@/features/plan';
+import { Execution } from '@/features/execution';
+import { Subject } from '@/entities/subject';
 
 interface TimelineProps {
   date: Date | string;
+  plans: Plan[];
+  executions: Execution[];
+  subjects: Subject[];
+  updatePlan: (id: string, updates: Partial<Pick<Plan, 'startTime' | 'endTime'>>) => void;
+  updateExecution: (id: string, updates: Partial<Pick<Execution, 'startTime' | 'endTime'>>) => void;
 }
 
-export const Timeline: React.FC<TimelineProps> = ({ date }) => {
+export const Timeline: React.FC<TimelineProps> = ({
+  date,
+  plans,
+  executions,
+  subjects,
+  updatePlan,
+  updateExecution,
+}) => {
   const dateString = typeof date === 'string' ? date : date.toISOString().split('T')[0];
-  const { plans, executions, loading, error, subjects, updatePlan, updateExecution } = useTimelineData(date);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingBlock, setPendingBlock] = useState<{
     type: 'plan' | 'execution';
@@ -17,36 +30,16 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
     endTime: string;
   } | null>(null);
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <p className="text-gray-500">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-white rounded-lg shadow-sm border border-red-200 p-8 text-center">
-          <p className="text-red-600">데이터 로딩 오류: {error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleCreatePlan = (startTime: string, endTime: string) => {
-    console.log('새 계획 생성:', { startTime, endTime });
-    // TODO: 실제 생성 모달 또는 API 호출
+  const handleCreatePlan = (subjectId: string, startTime: string, endTime: string, memo: string) => {
+    console.log('새 계획 생성:', { subjectId, startTime, endTime, memo });
+    // TODO: 실제 API 호출로 블록 생성
     setPendingBlock({ type: 'plan', startTime, endTime });
     setShowCreateModal(true);
   };
 
-  const handleCreateExecution = (startTime: string, endTime: string) => {
-    console.log('새 실행 생성:', { startTime, endTime });
-    // TODO: 실제 생성 모달 또는 API 호출
+  const handleCreateExecution = (subjectId: string, startTime: string, endTime: string, memo: string) => {
+    console.log('새 실행 생성:', { subjectId, startTime, endTime, memo });
+    // TODO: 실제 API 호출로 블록 생성
     setPendingBlock({ type: 'execution', startTime, endTime });
     setShowCreateModal(true);
   };

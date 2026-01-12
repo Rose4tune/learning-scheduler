@@ -3,7 +3,7 @@ import { Plan, PlanBlock } from '@/features/plan';
 import { Execution, ExecutionBlock } from '@/features/execution';
 import { Subject } from '@/entities/subject';
 import { useOverlapLayout } from '@/shared/hooks';
-import { useCreate, useMove, useResize, EditModal } from '@/features/schedule-edit';
+import { useCreate, useMove, useResize, EditModal, CreateModal } from '@/features/schedule-edit';
 import { useSnap } from '@/features/schedule-edit';
 import { CreatePreview } from './CreatePreview';
 
@@ -13,7 +13,7 @@ interface ColumnProps {
   plans?: Plan[];
   executions?: Execution[];
   subjects?: Subject[];
-  onCreateBlock?: (startTime: string, endTime: string) => void;
+  onCreateBlock?: (subjectId: string, startTime: string, endTime: string, memo: string) => void;
   onUpdateBlock?: (id: string, newStartTime: string, newEndTime: string) => void;
   onSaveBlock?: (item: Plan | Execution) => void;
   onDeleteBlock?: (id: string) => void;
@@ -36,6 +36,10 @@ export const Column: React.FC<ColumnProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isMovingBlock, setIsMovingBlock] = useState(false);
   
+  // 생성 모달 상태
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [pendingTimeRange, setPendingTimeRange] = useState<{startTime: string; endTime: string} | null>(null);
+  
   // 편집 모달 상태
   const [editingItem, setEditingItem] = useState<Plan | Execution | null>(null);
 
@@ -51,7 +55,9 @@ export const Column: React.FC<ColumnProps> = ({
     useCreate({
       snapToGrid,
       onCreateEnd: (start, end) => {
-        onCreateBlock?.(start, end);
+        // 드래그 완료 시 생성 모달 표시
+        setPendingTimeRange({ startTime: start, endTime: end });
+        setShowCreateModal(true);
       },
     });
 
@@ -176,9 +182,24 @@ export const Column: React.FC<ColumnProps> = ({
     startResize(id, handle, startTime, endTime);
   };
 
-  // 블록 클릭 핸들러
-  const handleBlockClick = (item: Plan | Execution) => {
+  // 블록 편집 핸들러
+  const handleBlockEdit = (item: Plan | Execution) => {
     setEditingItem(item);
+  };
+
+  // 생성 모달에서 블록 생성
+  const handleCreate = (subjectId: string, memo: string) => {
+    if (pendingTimeRange) {
+      onCreateBlock?.(subjectId, pendingTimeRange.startTime, pendingTimeRange.endTime, memo);
+      setShowCreateModal(false);
+      setPendingTimeRange(null);
+    }
+  };
+
+  // 생성 모달 닫기
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+    setPendingTimeRange(null);
   };
 
   // 편집 모달 저장
@@ -196,7 +217,7 @@ export const Column: React.FC<ColumnProps> = ({
   };
 
   // 편집 모달 닫기
-  const handleCloseModal = () => {
+  const handleCloseEditModal = () => {
     setEditingItem(null);
   };
 
@@ -249,7 +270,7 @@ export const Column: React.FC<ColumnProps> = ({
                   tempTimes={tempTimes}
                   isMoving={isMovingThis}
                   isResizing={isResizingThis}
-                  onClick={handleBlockClick}
+                  onEdit={handleBlockEdit}
                   onMoveStart={handleBlockMoveStart}
                   onResizeStart={handleBlockResizeStart}
                 />
@@ -269,13 +290,25 @@ export const Column: React.FC<ColumnProps> = ({
                   tempTimes={tempTimes}
                   isMoving={isMovingThis}
                   isResizing={isResizingThis}
-                  onClick={handleBlockClick}
+                  onEdit={handleBlockEdit}
                   onMoveStart={handleBlockMoveStart}
                   onResizeStart={handleBlockResizeStart}
                 />
               );
             })}
       </div>
+
+      {/* 생성 모달 */}
+      {showCreateModal && pendingTimeRange && (
+        <CreateModal
+          type={type}
+          startTime={pendingTimeRange.startTime}
+          endTime={pendingTimeRange.endTime}
+          subjects={subjects}
+          onCreate={handleCreate}
+          onClose={handleCloseCreateModal}
+        />
+      )}
 
       {/* 편집 모달 */}
       {editingItem && (
@@ -285,7 +318,7 @@ export const Column: React.FC<ColumnProps> = ({
           subjects={subjects}
           onSave={handleSave}
           onDelete={handleDelete}
-          onClose={handleCloseModal}
+          onClose={handleCloseEditModal}
         />
       )}
     </div>

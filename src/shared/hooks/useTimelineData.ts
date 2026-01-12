@@ -8,6 +8,8 @@ import {
   fetchExecutionsByDate,
   fetchSubjects,
   fetchDateEventByDate,
+  updatePlan as apiUpdatePlan,
+  updateExecution as apiUpdateExecution,
   PlanDTO,
   ExecutionDTO,
 } from '@/shared/api';
@@ -71,7 +73,8 @@ export const useTimelineData = (date: Date | string) => {
     loadData();
   }, [dateString]);
 
-  const updatePlan = (id: string, updates: Partial<Pick<Plan, 'startTime' | 'endTime'>>) => {
+  const updatePlan = async (id: string, updates: Partial<Pick<Plan, 'startTime' | 'endTime'>>) => {
+    // 1. 로컬 상태 즉시 업데이트 (UI 반응성)
     setPlans((prev) =>
       prev.map((plan) => {
         if (plan.id !== id) return plan;
@@ -91,9 +94,18 @@ export const useTimelineData = (date: Date | string) => {
         };
       })
     );
+
+    // 2. Mock API 업데이트 (데이터 영속성)
+    try {
+      await apiUpdatePlan(id, updates);
+    } catch (error) {
+      console.error('Failed to update plan:', error);
+      // TODO: 에러 처리 (롤백 또는 재시도)
+    }
   };
 
-  const updateExecution = (id: string, updates: Partial<Pick<Execution, 'startTime' | 'endTime'>>) => {
+  const updateExecution = async (id: string, updates: Partial<Pick<Execution, 'startTime' | 'endTime'>>) => {
+    // 1. 로컬 상태 즉시 업데이트 (UI 반응성)
     setExecutions((prev) =>
       prev.map((execution) => {
         if (execution.id !== id) return execution;
@@ -113,6 +125,14 @@ export const useTimelineData = (date: Date | string) => {
         };
       })
     );
+
+    // 2. Mock API 업데이트 (데이터 영속성)
+    try {
+      await apiUpdateExecution(id, updates);
+    } catch (error) {
+      console.error('Failed to update execution:', error);
+      // TODO: 에러 처리 (롤백 또는 재시도)
+    }
   };
 
   return {

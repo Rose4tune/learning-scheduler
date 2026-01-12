@@ -13,7 +13,7 @@ interface PlanBlockProps {
   tempTimes?: {startTime: string; endTime: string};
   isMoving?: boolean;
   isResizing?: boolean;
-  onClick?: (plan: Plan) => void;
+  onEdit?: (plan: Plan) => void;
   onMoveStart?: (id: string, startTime: string, endTime: string, clientY: number, blockTop: number) => void;
   onResizeStart?: (id: string, handle: 'top' | 'bottom', startTime: string, endTime: string) => void;
 }
@@ -25,7 +25,7 @@ export const PlanBlock: React.FC<PlanBlockProps> = ({
   tempTimes,
   isMoving = false, 
   isResizing = false,
-  onClick,
+  onEdit,
   onMoveStart,
   onResizeStart,
 }) => {
@@ -57,11 +57,11 @@ export const PlanBlock: React.FC<PlanBlockProps> = ({
         width: '100%',
       };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // 클릭 - 편집 모달 표시
-    if (!isMoving && !isResizing && onClick) {
-      e.stopPropagation();
-      onClick(plan);
+  const handleEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // 편집 아이콘 클릭 - 편집 모달 표시
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(plan);
     }
   };
 
@@ -88,17 +88,27 @@ export const PlanBlock: React.FC<PlanBlockProps> = ({
       onMouseDown={handleMouseDown}
     >
       <div
-        className={`h-full rounded-md border-l-4 px-3 py-2 cursor-move hover:shadow-md transition-shadow overflow-hidden select-none relative ${
+        className={`group h-full rounded-md border-l-4 px-3 py-2 cursor-move hover:shadow-md transition-shadow overflow-hidden select-none relative ${
           (isMoving || isResizing) ? 'opacity-70 shadow-lg' : ''
         }`}
         style={{
           borderLeftColor: plan.subject.color,
           backgroundColor: `${plan.subject.color}15`,
         }}
-        onClick={handleClick}
       >
         {/* 상단 리사이즈 핸들 */}
         <ResizeHandle position="top" onMouseDown={handleResizeStart('top')} />
+
+        {/* 편집 아이콘 */}
+        {onEdit && (
+          <button
+            onClick={handleEditClick}
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/50 rounded"
+            title="편집"
+          >
+            <span className="text-sm">⚙️</span>
+          </button>
+        )}
 
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
