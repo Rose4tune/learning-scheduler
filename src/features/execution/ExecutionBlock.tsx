@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Execution } from './execution.model';
+import { Plan } from '@/features/plan';
 import { getMinutesDifference, formatDuration, timeToPixel } from '@/shared/lib';
 import { ResizeHandle } from '@/features/schedule-edit';
 
 interface ExecutionBlockProps {
   execution: Execution;
+  plans?: Plan[]; // 달성률 계산을 위한 계획 목록
   layout?: {
     left: number;
     width: number;
@@ -20,6 +22,7 @@ interface ExecutionBlockProps {
 
 export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
   execution,
+  plans = [],
   layout,
   tempTop,
   tempTimes,
@@ -39,6 +42,43 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
   const tempTopCalc = tempTimes ? timeToPixel(startTime) : execution.top;
   
   const isShort = tempHeight < 60; // 1시간 미만
+
+  /**
+   * 달성률 계산 (실시간)
+   * - 같은 날짜/과목의 계획 시간 대비 실행 시간
+   * - 계획이 없으면 null 반환
+   */
+  const calculatedAchievement = useMemo(() => {
+    // 같은 날짜/과목의 계획 찾기
+    const matchingPlans = plans.filter(
+      (plan) =>
+        plan.date === execution.date &&
+        plan.subject.id === execution.subject.id
+    );
+
+    if (matchingPlans.length === 0) {
+      // 계획이 없으면 원본 achievement 사용
+      return execution.achievement;
+    }
+
+    // 총 계획 시간 계산
+    const totalPlanMinutes = matchingPlans.reduce(
+      (sum, plan) => sum + getMinutesDifference(plan.startTime, plan.endTime),
+      0
+    );
+
+    if (totalPlanMinutes === 0) {
+      return execution.achievement;
+    }
+
+    // 실행 시간 (현재 시간 사용 - tempTimes 반영)
+    const executionMinutes = duration;
+
+    // 달성률 계산 (0-100%)
+    const achievement = Math.min(100, Math.round((executionMinutes / totalPlanMinutes) * 100));
+    
+    return achievement;
+  }, [plans, execution.date, execution.subject.id, execution.achievement, duration]);
 
   // 달성률에 따른 배지 색상
   const getAchievementColor = (achievement?: number) => {
@@ -138,13 +178,13 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
             <div className="text-xs font-medium text-gray-500 whitespace-nowrap">
               {formatDuration(duration)}
             </div>
-            {execution.achievement !== undefined && (
+            {calculatedAchievement !== undefined && (
               <span
                 className={`text-xs text-white px-1.5 py-0.5 rounded ${getAchievementColor(
-                  execution.achievement
+                  calculatedAchievement
                 )}`}
               >
-                {execution.achievement}%
+                {calculatedAchievement}%
               </span>
             )}
           </div>

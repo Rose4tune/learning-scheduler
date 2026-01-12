@@ -285,6 +285,7 @@ export const Column: React.FC<ColumnProps> = ({
                 <ExecutionBlock
                   key={execution.id}
                   execution={execution}
+                  plans={plans}
                   layout={layout}
                   tempTop={tempTop}
                   tempTimes={tempTimes}
