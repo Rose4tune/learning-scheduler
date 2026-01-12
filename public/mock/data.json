@@ -39,6 +39,17 @@
       "date": "2026-01-12",
       "title": "중간고사 대비 주간",
       "description": "수학, 영어 집중 학습",
+      "icon": "📝",
+      "isRepresentative": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "event-2",
+      "date": "2026-01-15",
+      "title": "프로젝트 발표",
+      "description": "과학 실험 프로젝트",
+      "icon": "🎤",
       "isRepresentative": true,
       "createdAt": "2024-01-01T00:00:00Z",
       "updatedAt": "2024-01-01T00:00:00Z"
@@ -76,6 +87,46 @@
       "endTime": "11:00",
       "subjectId": "subject-4",
       "memo": "조선시대 정리"
+    },
+    {
+      "id": "plan-5",
+      "date": "2026-01-13",
+      "startTime": "10:00",
+      "endTime": "12:00",
+      "subjectId": "subject-1",
+      "memo": "수학 복습"
+    },
+    {
+      "id": "plan-6",
+      "date": "2026-01-14",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "subjectId": "subject-2",
+      "memo": "영어 단어 암기"
+    },
+    {
+      "id": "plan-7",
+      "date": "2026-01-15",
+      "startTime": "09:00",
+      "endTime": "12:00",
+      "subjectId": "subject-3",
+      "memo": "과학 프로젝트 준비"
+    },
+    {
+      "id": "plan-8",
+      "date": "2026-01-16",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "subjectId": "subject-1",
+      "memo": "수학 문제 풀이"
+    },
+    {
+      "id": "plan-9",
+      "date": "2026-01-20",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "subjectId": "subject-4",
+      "memo": "한국사 정리"
     }
   ],
   "executions": [
@@ -105,6 +156,42 @@
       "subjectId": "subject-3",
       "memo": "보고서 작성 중",
       "achievement": 60
+    },
+    {
+      "id": "execution-4",
+      "date": "2026-01-13",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "subjectId": "subject-1",
+      "memo": "수학 복습 완료",
+      "achievement": 90
+    },
+    {
+      "id": "execution-5",
+      "date": "2026-01-15",
+      "startTime": "09:00",
+      "endTime": "11:30",
+      "subjectId": "subject-3",
+      "memo": "프로젝트 준비 완료",
+      "achievement": 95
+    },
+    {
+      "id": "execution-6",
+      "date": "2026-01-18",
+      "startTime": "15:00",
+      "endTime": "17:00",
+      "subjectId": "subject-2",
+      "memo": "영어 회화 연습",
+      "achievement": 80
+    },
+    {
+      "id": "execution-7",
+      "date": "2026-01-22",
+      "startTime": "10:00",
+      "endTime": "11:00",
+      "subjectId": "subject-1",
+      "memo": "수학 연습",
+      "achievement": 85
     }
   ]
 }

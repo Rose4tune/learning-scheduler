@@ -4,6 +4,7 @@ import { getMinutesDifference } from '@/shared/lib';
 import { DateNavigation } from './DateNavigation';
 import { DateEventChip } from './DateEventChip';
 import { StatsInfo } from './StatsInfo';
+import { Calendar } from '@/widgets/Calendar';
 
 interface HeaderProps {
   currentDate: Date;
@@ -36,32 +37,49 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, onDateChange }) => 
 
   const handleCalendarClick = () => {
     setShowCalendar(!showCalendar);
-    // TODO: Phase 5에서 캘린더 위젯 구현
-    console.log('캘린더 위젯 표시 (Phase 5에서 구현 예정)');
+  };
+
+  const handleDateSelect = (date: Date) => {
+    onDateChange(date);
+  };
+
+  const handleCalendarClose = () => {
+    setShowCalendar(false);
   };
 
   return (
-    <header className="bg-white shadow-sm">
-      {/* Section 1: 날짜 네비게이션 */}
-      <DateNavigation
-        currentDate={currentDate}
-        onDateChange={onDateChange}
-        onCalendarClick={handleCalendarClick}
-      />
+    <>
+      <header className="bg-white shadow-sm">
+        {/* Section 1: 날짜 네비게이션 */}
+        <DateNavigation
+          currentDate={currentDate}
+          onDateChange={onDateChange}
+          onCalendarClick={handleCalendarClick}
+        />
 
-      {/* Section 2: 통계 정보 영역 */}
-      <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* 좌측: 대표 일정 Chip */}
-          <DateEventChip dateEvent={mainDateEvent} />
+        {/* Section 2: 통계 정보 영역 */}
+        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            {/* 좌측: 대표 일정 Chip */}
+            <DateEventChip dateEvent={mainDateEvent} />
 
-          {/* 우측: 통계 정보 */}
-          <StatsInfo
-            totalPlanMinutes={totalPlanMinutes}
-            totalExecutionMinutes={totalExecutionMinutes}
-          />
+            {/* 우측: 통계 정보 */}
+            <StatsInfo
+              totalPlanMinutes={totalPlanMinutes}
+              totalExecutionMinutes={totalExecutionMinutes}
+            />
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* 캘린더 위젯 */}
+      {showCalendar && (
+        <Calendar
+          currentDate={currentDate}
+          onDateSelect={handleDateSelect}
+          onClose={handleCalendarClose}
+        />
+      )}
+    </>
   );
 };
