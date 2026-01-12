@@ -66,6 +66,50 @@ export const useTimelineData = (date: string) => {
     loadData();
   }, [date]);
 
+  const updatePlan = (id: string, updates: Partial<Pick<Plan, 'startTime' | 'endTime'>>) => {
+    setPlans((prev) =>
+      prev.map((plan) => {
+        if (plan.id !== id) return plan;
+        
+        const newStartTime = updates.startTime ?? plan.startTime;
+        const newEndTime = updates.endTime ?? plan.endTime;
+        const top = timeToPixel(newStartTime);
+        const endPixel = timeToPixel(newEndTime);
+        const height = endPixel - top;
+
+        return {
+          ...plan,
+          startTime: newStartTime,
+          endTime: newEndTime,
+          top,
+          height,
+        };
+      })
+    );
+  };
+
+  const updateExecution = (id: string, updates: Partial<Pick<Execution, 'startTime' | 'endTime'>>) => {
+    setExecutions((prev) =>
+      prev.map((execution) => {
+        if (execution.id !== id) return execution;
+        
+        const newStartTime = updates.startTime ?? execution.startTime;
+        const newEndTime = updates.endTime ?? execution.endTime;
+        const top = timeToPixel(newStartTime);
+        const endPixel = timeToPixel(newEndTime);
+        const height = endPixel - top;
+
+        return {
+          ...execution,
+          startTime: newStartTime,
+          endTime: newEndTime,
+          top,
+          height,
+        };
+      })
+    );
+  };
+
   return {
     subjects,
     plans,
@@ -73,6 +117,8 @@ export const useTimelineData = (date: string) => {
     dateEvent,
     loading,
     error,
+    updatePlan,
+    updateExecution,
   };
 };
 

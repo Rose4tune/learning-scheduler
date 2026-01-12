@@ -1,53 +1,88 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { pixelToTime, timeToPixel } from '@/shared/lib';
 
 interface UseResizeOptions {
-  onResizeStart?: (id: string, direction: 'top' | 'bottom') => void;
-  onResize?: (id: string, newStartTime: string, newEndTime: string) => void;
+  snapToGrid?: (time: string) => string;
   onResizeEnd?: (id: string, newStartTime: string, newEndTime: string) => void;
 }
 
 export const useResize = (options: UseResizeOptions = {}) => {
   const [resizingId, setResizingId] = useState<string | null>(null);
-  const [resizeDirection, setResizeDirection] = useState<'top' | 'bottom' | null>(null);
+  const [resizeHandle, setResizeHandle] = useState<'top' | 'bottom' | null>(null);
+  const [originalStart, setOriginalStart] = useState<string | null>(null);
+  const [originalEnd, setOriginalEnd] = useState<string | null>(null);
 
-  const startResize = (id: string, direction: 'top' | 'bottom') => {
-    setResizingId(id);
-    setResizeDirection(direction);
-    options.onResizeStart?.(id, direction);
-  };
+  const startResize = useCallback(
+    (id: string, handle: 'top' | 'bottom', startTime: string, endTime: string) => {
+      setResizingId(id);
+      setResizeHandle(handle);
+      setOriginalStart(startTime);
+      setOriginalEnd(endTime);
+    },
+    []
+  );
 
-  const updateResize = (
-    id: string,
-    clientY: number,
-    snapToTime: (y: number) => string,
-    currentStart: string,
-    currentEnd: string
-  ) => {
-    if (!resizeDirection) return;
+  const updateResize = useCallback(
+    (clientY: number, containerTop: number) => {
+      if (!resizingId || !resizeHandle || !originalStart || !originalEnd) return null;
 
-    let newStart = currentStart;
-    let newEnd = currentEnd;
+      const relativeY = clientY - containerTop;
+      const newTime = pixelToTime(Math.max(0, relativeY));
 
-    if (resizeDirection === 'top') {
-      newStart = snapToTime(clientY);
-    } else {
-      newEnd = snapToTime(clientY);
-    }
+      let newStartTime = originalStart;
+      let newEndTime = originalEnd;
 
-    options.onResize?.(id, newStart, newEnd);
-  };
+      if (resizeHandle === 'top') {
+        newStartTime = newTime;
+        // 시작 시간이 종료 시간보다 늦으면 안됨
+        if (timeToPixel(newStartTime) >= timeToPixel(originalEnd)) {
+          newStartTime = originalEnd;
+        }
+      } else {
+        newEndTime = newTime;
+        // 종료 시간이 시작 시간보다 빠르면 안됨
+        if (timeToPixel(newEndTime) <= timeToPixel(originalStart)) {
+          newEndTime = originalStart;
+        }
+      }
 
-  const endResize = (id: string, newStart: string, newEnd: string) => {
-    options.onResizeEnd?.(id, newStart, newEnd);
+      const snappedStart = options.snapToGrid ? options.snapToGrid(newStartTime) : newStartTime;
+      const snappedEnd = options.snapToGrid ? options.snapToGrid(newEndTime) : newEndTime;
+
+      return {
+        startTime: snappedStart,
+        endTime: snappedEnd,
+      };
+    },
+    [resizingId, resizeHandle, originalStart, originalEnd, options.snapToGrid]
+  );
+
+  const endResize = useCallback(
+    (newStartTime: string, newEndTime: string) => {
+      if (resizingId) {
+        options.onResizeEnd?.(resizingId, newStartTime, newEndTime);
+      }
+      setResizingId(null);
+      setResizeHandle(null);
+      setOriginalStart(null);
+      setOriginalEnd(null);
+    },
+    [resizingId, options]
+  );
+
+  const cancelResize = useCallback(() => {
     setResizingId(null);
-    setResizeDirection(null);
-  };
+    setResizeHandle(null);
+    setOriginalStart(null);
+    setOriginalEnd(null);
+  }, []);
 
   return {
     resizingId,
-    resizeDirection,
+    resizeHandle,
     startResize,
     updateResize,
     endResize,
+    cancelResize,
   };
 };

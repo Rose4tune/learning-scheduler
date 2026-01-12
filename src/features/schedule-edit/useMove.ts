@@ -30,16 +30,17 @@ export const useMove = (options: UseMoveOptions = {}) => {
 
       const deltaY = clientY - startY;
       const newTop = Math.max(0, currentTop + deltaY);
-      
-      setCurrentTop(newTop);
 
       const newStartTime = pixelToTime(newTop);
       const duration = getMinutesDifference(originalStart, originalEnd);
-      const endPixel = newTop + timeToPixel(`00:${duration}`);
-      const newEndTime = pixelToTime(endPixel);
+      const newStartMinutes = parseInt(newStartTime.split(':')[0]) * 60 + parseInt(newStartTime.split(':')[1]);
+      const newEndMinutes = newStartMinutes + duration;
+      const newEndTime = `${String(Math.floor(newEndMinutes / 60)).padStart(2, '0')}:${String(newEndMinutes % 60).padStart(2, '0')}`;
 
       const snappedStart = options.snapToGrid ? options.snapToGrid(newStartTime) : newStartTime;
-      const snappedEnd = options.snapToGrid ? options.snapToGrid(newEndTime) : newEndTime;
+      const snappedStartMinutes = parseInt(snappedStart.split(':')[0]) * 60 + parseInt(snappedStart.split(':')[1]);
+      const snappedEndMinutes = snappedStartMinutes + duration;
+      const snappedEnd = `${String(Math.floor(snappedEndMinutes / 60)).padStart(2, '0')}:${String(snappedEndMinutes % 60).padStart(2, '0')}`;
 
       return {
         top: timeToPixel(snappedStart),
@@ -74,6 +75,7 @@ export const useMove = (options: UseMoveOptions = {}) => {
 
   return {
     movingId,
+    currentTop,
     startMove,
     updateMove,
     endMove,

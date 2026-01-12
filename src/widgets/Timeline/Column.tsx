@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Plan, PlanBlock } from '@/features/plan';
 import { Execution, ExecutionBlock } from '@/features/execution';
 import { useOverlapLayout } from '@/shared/hooks';
-import { useCreate } from '@/features/schedule-edit';
+import { useCreate, useMove, useResize } from '@/features/schedule-edit';
 import { useSnap } from '@/features/schedule-edit';
 import { CreatePreview } from './CreatePreview';
 
@@ -12,6 +12,7 @@ interface ColumnProps {
   plans?: Plan[];
   executions?: Execution[];
   onCreateBlock?: (startTime: string, endTime: string) => void;
+  onUpdateBlock?: (id: string, newStartTime: string, newEndTime: string) => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({
@@ -20,11 +21,13 @@ export const Column: React.FC<ColumnProps> = ({
   plans = [],
   executions = [],
   onCreateBlock,
+  onUpdateBlock,
 }) => {
   const title = type === 'plan' ? '계획 (Plan)' : '실행 (Execution)';
   const blocks = type === 'plan' ? plans : executions;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMovingBlock, setIsMovingBlock] = useState(false);
 
   // 겹침 처리된 레이아웃 계산
   const planLayouts = useOverlapLayout(plans);
@@ -42,6 +45,30 @@ export const Column: React.FC<ColumnProps> = ({
       },
     });
 
+  // 블록 이동 훅
+  const { movingId, currentTop, startMove, updateMove, endMove, cancelMove } = useMove({
+    snapToGrid,
+    onMoveEnd: (id, newStartTime, newEndTime) => {
+      onUpdateBlock?.(id, newStartTime, newEndTime);
+      setIsMovingBlock(false);
+    },
+  });
+
+  // 드래그 중인 블록의 임시 위치 저장
+  const [movePreview, setMovePreview] = useState<{top: number; startTime: string; endTime: string} | null>(null);
+  
+  // 리사이즈 중인 블록의 임시 크기 저장
+  const [resizePreview, setResizePreview] = useState<{startTime: string; endTime: string} | null>(null);
+  const [isResizingBlock, setIsResizingBlock] = useState(false);
+
+  // 블록 리사이즈 훅
+  const { resizingId, resizeHandle, startResize, updateResize, endResize, cancelResize } = useResize({
+    snapToGrid,
+    onResizeEnd: (id, newStartTime, newEndTime) => {
+      onUpdateBlock?.(id, newStartTime, newEndTime);
+    },
+  });
+
   const handleMouseDown = (e: React.MouseEvent) => {
     // 빈 영역에서만 드래그 시작 (블록이 아닌 곳)
     if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('grid-line')) {
@@ -55,34 +82,98 @@ export const Column: React.FC<ColumnProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && isCreating) {
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
-        updateCreate(e.clientY, rect.top);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    if (isResizingBlock && resizingId) {
+      // 블록 리사이즈 중
+      const result = updateResize(e.clientY, rect.top);
+      if (result) {
+        setResizePreview(result);
       }
+    } else if (isMovingBlock && movingId) {
+      // 블록 이동 중
+      const result = updateMove(e.clientY);
+      if (result) {
+        setMovePreview(result);
+      }
+    } else if (isDragging && isCreating) {
+      // 블록 생성 중
+      updateCreate(e.clientY, rect.top);
     }
   };
 
-  const handleMouseUp = () => {
-    if (isDragging) {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (isResizingBlock && resizingId) {
+      // 블록 리사이즈 완료
+      if (resizePreview) {
+        endResize(resizePreview.startTime, resizePreview.endTime);
+        setResizePreview(null);
+      } else {
+        cancelResize();
+      }
+      setIsResizingBlock(false);
+    } else if (isMovingBlock && movingId) {
+      // 블록 이동 완료
+      if (movePreview) {
+        endMove(movePreview.startTime, movePreview.endTime);
+        setMovePreview(null);
+      } else {
+        cancelMove();
+      }
+      setIsMovingBlock(false);
+    } else if (isDragging) {
       setIsDragging(false);
       endCreate();
     }
   };
 
   const handleMouseLeave = () => {
-    if (isDragging) {
+    if (isResizingBlock) {
+      cancelResize();
+      setIsResizingBlock(false);
+      setResizePreview(null);
+    } else if (isMovingBlock) {
+      cancelMove();
+      setIsMovingBlock(false);
+      setMovePreview(null);
+    } else if (isDragging) {
       setIsDragging(false);
       cancelCreate();
     }
+  };
+
+  // 블록 이동 시작 핸들러
+  const handleBlockMoveStart = (
+    id: string,
+    startTime: string,
+    endTime: string,
+    clientY: number,
+    blockTop: number
+  ) => {
+    setIsMovingBlock(true);
+    startMove(id, startTime, endTime, clientY, blockTop);
+  };
+
+  // 블록 리사이즈 시작 핸들러
+  const handleBlockResizeStart = (
+    id: string,
+    handle: 'top' | 'bottom',
+    startTime: string,
+    endTime: string
+  ) => {
+    setIsResizingBlock(true);
+    startResize(id, handle, startTime, endTime);
   };
 
   return (
     <div className="relative">
       {/* 컬럼 헤더 */}
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
-        <h3 className="font-semibold text-gray-900">{title}</h3>
-        <p className="text-xs text-gray-500 mt-0.5">{blocks.length}개</p>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold text-gray-900 whitespace-nowrap">{title}</h3>
+          <p className="text-xs text-gray-500 whitespace-nowrap">{blocks.length}개</p>
+        </div>
       </div>
 
       {/* 타임라인 영역 */}
@@ -110,12 +201,44 @@ export const Column: React.FC<ColumnProps> = ({
 
         {/* 블록 렌더링 (겹침 레이아웃 적용) */}
         {type === 'plan'
-          ? planLayouts.map(({ block: plan, layout }) => (
-              <PlanBlock key={plan.id} plan={plan} layout={layout} />
-            ))
-          : executionLayouts.map(({ block: execution, layout }) => (
-              <ExecutionBlock key={execution.id} execution={execution} layout={layout} />
-            ))}
+          ? planLayouts.map(({ block: plan, layout }) => {
+              const isMovingThis = movingId === plan.id;
+              const isResizingThis = resizingId === plan.id;
+              const tempTop = isMovingThis && movePreview ? movePreview.top : undefined;
+              const tempTimes = isResizingThis && resizePreview ? resizePreview : undefined;
+              return (
+                <PlanBlock
+                  key={plan.id}
+                  plan={plan}
+                  layout={layout}
+                  tempTop={tempTop}
+                  tempTimes={tempTimes}
+                  isMoving={isMovingThis}
+                  isResizing={isResizingThis}
+                  onMoveStart={handleBlockMoveStart}
+                  onResizeStart={handleBlockResizeStart}
+                />
+              );
+            })
+          : executionLayouts.map(({ block: execution, layout }) => {
+              const isMovingThis = movingId === execution.id;
+              const isResizingThis = resizingId === execution.id;
+              const tempTop = isMovingThis && movePreview ? movePreview.top : undefined;
+              const tempTimes = isResizingThis && resizePreview ? resizePreview : undefined;
+              return (
+                <ExecutionBlock
+                  key={execution.id}
+                  execution={execution}
+                  layout={layout}
+                  tempTop={tempTop}
+                  tempTimes={tempTimes}
+                  isMoving={isMovingThis}
+                  isResizing={isResizingThis}
+                  onMoveStart={handleBlockMoveStart}
+                  onResizeStart={handleBlockResizeStart}
+                />
+              );
+            })}
       </div>
     </div>
   );

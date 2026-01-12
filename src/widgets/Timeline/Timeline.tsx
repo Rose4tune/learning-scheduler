@@ -8,7 +8,7 @@ interface TimelineProps {
 }
 
 export const Timeline: React.FC<TimelineProps> = ({ date }) => {
-  const { plans, executions, loading, error, subjects } = useTimelineData(date);
+  const { plans, executions, loading, error, subjects, updatePlan, updateExecution } = useTimelineData(date);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingBlock, setPendingBlock] = useState<{
     type: 'plan' | 'execution';
@@ -50,6 +50,16 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
     setShowCreateModal(true);
   };
 
+  const handleUpdatePlan = (id: string, newStartTime: string, newEndTime: string) => {
+    console.log('계획 업데이트:', { id, newStartTime, newEndTime });
+    updatePlan(id, { startTime: newStartTime, endTime: newEndTime });
+  };
+
+  const handleUpdateExecution = (id: string, newStartTime: string, newEndTime: string) => {
+    console.log('실행 업데이트:', { id, newStartTime, newEndTime });
+    updateExecution(id, { startTime: newStartTime, endTime: newEndTime });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -63,6 +73,7 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
             date={date}
             plans={plans}
             onCreateBlock={handleCreatePlan}
+            onUpdateBlock={handleUpdatePlan}
           />
           
           {/* Execution 컬럼 */}
@@ -71,6 +82,7 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
             date={date}
             executions={executions}
             onCreateBlock={handleCreateExecution}
+            onUpdateBlock={handleUpdateExecution}
           />
         </div>
       </div>

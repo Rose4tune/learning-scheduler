@@ -1,6 +1,7 @@
 import React from 'react';
 import { Execution } from './execution.model';
-import { getMinutesDifference, formatDuration } from '@/shared/lib';
+import { getMinutesDifference, formatDuration, timeToPixel } from '@/shared/lib';
+import { ResizeHandle } from '@/features/schedule-edit';
 
 interface ExecutionBlockProps {
   execution: Execution;
@@ -8,18 +9,34 @@ interface ExecutionBlockProps {
     left: number;
     width: number;
   };
-  onMove?: (id: string, newStart: string) => void;
-  onResize?: (id: string, newStart: string, newEnd: string) => void;
+  tempTop?: number;
+  tempTimes?: {startTime: string; endTime: string};
+  isMoving?: boolean;
+  isResizing?: boolean;
+  onMoveStart?: (id: string, startTime: string, endTime: string, clientY: number, blockTop: number) => void;
+  onResizeStart?: (id: string, handle: 'top' | 'bottom', startTime: string, endTime: string) => void;
 }
 
 export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
   execution,
   layout,
-  onMove,
-  onResize,
+  tempTop,
+  tempTimes,
+  isMoving = false,
+  isResizing = false,
+  onMoveStart,
+  onResizeStart,
 }) => {
-  const duration = getMinutesDifference(execution.startTime, execution.endTime);
-  const isShort = execution.height < 60; // 1시간 미만
+  // 리사이즈 중이면 임시 시간 사용
+  const startTime = tempTimes?.startTime ?? execution.startTime;
+  const endTime = tempTimes?.endTime ?? execution.endTime;
+  const duration = getMinutesDifference(startTime, endTime);
+  
+  // 리사이즈 중이면 임시 높이 계산
+  const tempHeight = tempTimes ? timeToPixel(endTime) - timeToPixel(startTime) : execution.height;
+  const tempTopCalc = tempTimes ? timeToPixel(startTime) : execution.top;
+  
+  const isShort = tempHeight < 60; // 1시간 미만
 
   // 달성률에 따른 배지 색상
   const getAchievementColor = (achievement?: number) => {
@@ -29,30 +46,56 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
     return 'bg-red-500';
   };
 
-  // 겹침 처리: layout이 있으면 적용
+  // 겹침 처리: layout이 있으면 적용, 드래그 중이면 tempTop 사용
+  const top = tempTop !== undefined ? tempTop : tempTopCalc;
+  const height = tempHeight;
   const blockStyle = layout
     ? {
-        top: `${execution.top}px`,
-        height: `${execution.height}px`,
+        top: `${top}px`,
+        height: `${height}px`,
         left: `${layout.left}%`,
         width: `${layout.width}%`,
       }
     : {
-        top: `${execution.top}px`,
-        height: `${execution.height}px`,
+        top: `${top}px`,
+        height: `${height}px`,
         left: '0',
         width: '100%',
       };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 드래그 시작 - 부모 컴포넌트의 생성 이벤트 방지
+    if (!isResizing && onMoveStart) {
+      e.stopPropagation();
+      onMoveStart(execution.id, execution.startTime, execution.endTime, e.clientY, execution.top);
+    }
+  };
+
+  const handleResizeStart = (handle: 'top' | 'bottom') => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onResizeStart) {
+      onResizeStart(execution.id, handle, execution.startTime, execution.endTime);
+    }
+  };
+
   return (
-    <div className="absolute px-2" style={blockStyle}>
+    <div
+      className="absolute px-2 group"
+      style={blockStyle}
+      onMouseDown={handleMouseDown}
+    >
       <div
-        className="h-full rounded-md border-l-4 px-3 py-2 cursor-move hover:shadow-md transition-shadow overflow-hidden relative"
+        className={`h-full rounded-md border-l-4 px-3 py-2 cursor-move hover:shadow-md transition-shadow overflow-hidden relative select-none ${
+          (isMoving || isResizing) ? 'opacity-70 shadow-lg' : ''
+        }`}
         style={{
           borderLeftColor: execution.subject.color,
           backgroundColor: `${execution.subject.color}25`,
         }}
       >
+        {/* 상단 리사이즈 핸들 */}
+        <ResizeHandle position="top" onMouseDown={handleResizeStart('top')} />
+
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-gray-900 truncate">
@@ -90,6 +133,9 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
             {execution.startTime} - {execution.endTime}
           </div>
         )}
+
+        {/* 하단 리사이즈 핸들 */}
+        <ResizeHandle position="bottom" onMouseDown={handleResizeStart('bottom')} />
       </div>
     </div>
   );
