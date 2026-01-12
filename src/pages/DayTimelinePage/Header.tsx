@@ -13,7 +13,7 @@ interface HeaderProps {
 
 /**
  * 헤더 컴포넌트 (2섹션 구조)
- * - Section 1: 날짜 네비게이션
+ * - Section 1: 날짜 네비게이션 
  * - Section 2: 통계 정보 (대표 일정 + 계획/실행/달성률)
  */
 export const Header: React.FC<HeaderProps> = ({ currentDate, onDateChange }) => {
@@ -36,11 +36,14 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, onDateChange }) => 
   }, 0);
 
   const handleCalendarClick = () => {
+    console.log('handleCalendarClick called, showCalendar:', showCalendar);
     setShowCalendar(!showCalendar);
+    console.log('After setState, showCalendar should be:', !showCalendar);
   };
 
   const handleDateSelect = (date: Date) => {
     onDateChange(date);
+    setShowCalendar(false);
   };
 
   const handleCalendarClose = () => {
@@ -49,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, onDateChange }) => 
 
   return (
     <>
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm relative">
         {/* Section 1: 날짜 네비게이션 */}
         <DateNavigation
           currentDate={currentDate}
@@ -70,16 +73,16 @@ export const Header: React.FC<HeaderProps> = ({ currentDate, onDateChange }) => 
             />
           </div>
         </div>
-      </header>
 
-      {/* 캘린더 위젯 */}
-      {showCalendar && (
-        <Calendar
-          currentDate={currentDate}
-          onDateSelect={handleDateSelect}
-          onClose={handleCalendarClose}
-        />
-      )}
+        {/* 캘린더 위젯 */}
+        {showCalendar && (
+          <Calendar
+            currentDate={currentDate}
+            onDateSelect={handleDateSelect}
+            onClose={handleCalendarClose}
+          />
+        )}
+      </header>
     </>
   );
 };

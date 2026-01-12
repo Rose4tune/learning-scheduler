@@ -61,6 +61,36 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
     updateExecution(id, { startTime: newStartTime, endTime: newEndTime });
   };
 
+  const handleSavePlan = (plan: any) => {
+    console.log('계획 저장:', plan);
+    updatePlan(plan.id, {
+      startTime: plan.startTime,
+      endTime: plan.endTime,
+      subjectId: plan.subjectId,
+      memo: plan.memo,
+    });
+  };
+
+  const handleSaveExecution = (execution: any) => {
+    console.log('실행 저장:', execution);
+    updateExecution(execution.id, {
+      startTime: execution.startTime,
+      endTime: execution.endTime,
+      subjectId: execution.subjectId,
+      memo: execution.memo,
+    });
+  };
+
+  const handleDeletePlan = (id: string) => {
+    console.log('계획 삭제:', id);
+    // TODO: 삭제 API 호출
+  };
+
+  const handleDeleteExecution = (id: string) => {
+    console.log('실행 삭제:', id);
+    // TODO: 삭제 API 호출
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -73,8 +103,11 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
             type="plan"
             date={dateString}
             plans={plans}
+            subjects={subjects}
             onCreateBlock={handleCreatePlan}
             onUpdateBlock={handleUpdatePlan}
+            onSaveBlock={handleSavePlan}
+            onDeleteBlock={handleDeletePlan}
           />
           
           {/* Execution 컬럼 */}
@@ -82,8 +115,11 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
             type="execution"
             date={dateString}
             executions={executions}
+            subjects={subjects}
             onCreateBlock={handleCreateExecution}
             onUpdateBlock={handleUpdateExecution}
+            onSaveBlock={handleSaveExecution}
+            onDeleteBlock={handleDeleteExecution}
           />
         </div>
       </div>

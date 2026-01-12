@@ -13,6 +13,7 @@ interface ExecutionBlockProps {
   tempTimes?: {startTime: string; endTime: string};
   isMoving?: boolean;
   isResizing?: boolean;
+  onClick?: (execution: Execution) => void;
   onMoveStart?: (id: string, startTime: string, endTime: string, clientY: number, blockTop: number) => void;
   onResizeStart?: (id: string, handle: 'top' | 'bottom', startTime: string, endTime: string) => void;
 }
@@ -24,6 +25,7 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
   tempTimes,
   isMoving = false,
   isResizing = false,
+  onClick,
   onMoveStart,
   onResizeStart,
 }) => {
@@ -63,6 +65,14 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
         width: '100%',
       };
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 클릭 - 편집 모달 표시
+    if (!isMoving && !isResizing && onClick) {
+      e.stopPropagation();
+      onClick(execution);
+    }
+  };
+
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // 드래그 시작 - 부모 컴포넌트의 생성 이벤트 방지
     if (!isResizing && onMoveStart) {
@@ -92,6 +102,7 @@ export const ExecutionBlock: React.FC<ExecutionBlockProps> = ({
           borderLeftColor: execution.subject.color,
           backgroundColor: `${execution.subject.color}25`,
         }}
+        onClick={handleClick}
       >
         {/* 상단 리사이즈 핸들 */}
         <ResizeHandle position="top" onMouseDown={handleResizeStart('top')} />

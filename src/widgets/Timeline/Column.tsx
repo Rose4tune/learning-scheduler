@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { Plan, PlanBlock } from '@/features/plan';
 import { Execution, ExecutionBlock } from '@/features/execution';
+import { Subject } from '@/entities/subject';
 import { useOverlapLayout } from '@/shared/hooks';
-import { useCreate, useMove, useResize } from '@/features/schedule-edit';
+import { useCreate, useMove, useResize, EditModal } from '@/features/schedule-edit';
 import { useSnap } from '@/features/schedule-edit';
 import { CreatePreview } from './CreatePreview';
 
@@ -11,8 +12,11 @@ interface ColumnProps {
   date: string;
   plans?: Plan[];
   executions?: Execution[];
+  subjects?: Subject[];
   onCreateBlock?: (startTime: string, endTime: string) => void;
   onUpdateBlock?: (id: string, newStartTime: string, newEndTime: string) => void;
+  onSaveBlock?: (item: Plan | Execution) => void;
+  onDeleteBlock?: (id: string) => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({
@@ -20,14 +24,20 @@ export const Column: React.FC<ColumnProps> = ({
   date,
   plans = [],
   executions = [],
+  subjects = [],
   onCreateBlock,
   onUpdateBlock,
+  onSaveBlock,
+  onDeleteBlock,
 }) => {
   const title = type === 'plan' ? '계획 (Plan)' : '실행 (Execution)';
   const blocks = type === 'plan' ? plans : executions;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isMovingBlock, setIsMovingBlock] = useState(false);
+  
+  // 편집 모달 상태
+  const [editingItem, setEditingItem] = useState<Plan | Execution | null>(null);
 
   // 겹침 처리된 레이아웃 계산
   const planLayouts = useOverlapLayout(plans);
@@ -166,6 +176,30 @@ export const Column: React.FC<ColumnProps> = ({
     startResize(id, handle, startTime, endTime);
   };
 
+  // 블록 클릭 핸들러
+  const handleBlockClick = (item: Plan | Execution) => {
+    setEditingItem(item);
+  };
+
+  // 편집 모달 저장
+  const handleSave = (updatedItem: Plan | Execution) => {
+    onSaveBlock?.(updatedItem);
+    setEditingItem(null);
+  };
+
+  // 편집 모달 삭제
+  const handleDelete = () => {
+    if (editingItem) {
+      onDeleteBlock?.(editingItem.id);
+      setEditingItem(null);
+    }
+  };
+
+  // 편집 모달 닫기
+  const handleCloseModal = () => {
+    setEditingItem(null);
+  };
+
   return (
     <div className="relative">
       {/* 컬럼 헤더 */}
@@ -215,6 +249,7 @@ export const Column: React.FC<ColumnProps> = ({
                   tempTimes={tempTimes}
                   isMoving={isMovingThis}
                   isResizing={isResizingThis}
+                  onClick={handleBlockClick}
                   onMoveStart={handleBlockMoveStart}
                   onResizeStart={handleBlockResizeStart}
                 />
@@ -234,12 +269,25 @@ export const Column: React.FC<ColumnProps> = ({
                   tempTimes={tempTimes}
                   isMoving={isMovingThis}
                   isResizing={isResizingThis}
+                  onClick={handleBlockClick}
                   onMoveStart={handleBlockMoveStart}
                   onResizeStart={handleBlockResizeStart}
                 />
               );
             })}
       </div>
+
+      {/* 편집 모달 */}
+      {editingItem && (
+        <EditModal
+          type={type}
+          item={editingItem}
+          subjects={subjects}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };

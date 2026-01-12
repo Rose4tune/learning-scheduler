@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface SettingsContextType {
   snapEnabled: boolean;
-  snapInterval: number; // 분 단위 (기본 30분)
+  snapInterval: number; // 분 단위 (기본 10분)
   setSnapEnabled: (enabled: boolean) => void;
   setSnapInterval: (interval: number) => void;
 }
@@ -23,7 +23,7 @@ interface SettingsProviderProps {
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
   const [snapEnabled, setSnapEnabled] = useState(true);
-  const [snapInterval, setSnapInterval] = useState(30); // 30분 단위 스냅
+  const [snapInterval, setSnapInterval] = useState(10); // 10분 단위 스냅
 
   return (
     <SettingsContext.Provider
