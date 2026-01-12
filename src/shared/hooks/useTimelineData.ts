@@ -16,11 +16,15 @@ import { timeToPixel } from '@/shared/lib';
 /**
  * 타임라인 데이터 로딩 및 변환 훅
  */
-export const useTimelineData = (date: string) => {
+export const useTimelineData = (date: Date | string) => {
+  // Date 객체를 YYYY-MM-DD 문자열로 변환
+  const dateString = typeof date === 'string' 
+    ? date 
+    : date.toISOString().split('T')[0];
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [executions, setExecutions] = useState<Execution[]>([]);
-  const [dateEvent, setDateEvent] = useState<DateEvent | null>(null);
+  const [dateEvents, setDateEvents] = useState<DateEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,13 +37,14 @@ export const useTimelineData = (date: string) => {
         // 병렬로 데이터 로드
         const [subjectsData, plansData, executionsData, dateEventData] = await Promise.all([
           fetchSubjects(),
-          fetchPlansByDate(date),
-          fetchExecutionsByDate(date),
-          fetchDateEventByDate(date),
+          fetchPlansByDate(dateString),
+          fetchExecutionsByDate(dateString),
+          fetchDateEventByDate(dateString),
         ]);
 
         setSubjects(subjectsData);
-        setDateEvent(dateEventData);
+        // dateEvent를 배열로 변환 (복수 대표 일정 지원)
+        setDateEvents(dateEventData ? [dateEventData] : []);
 
         // Subject ID로 매핑
         const subjectMap = new Map(subjectsData.map((s) => [s.id, s]));
@@ -64,7 +69,7 @@ export const useTimelineData = (date: string) => {
     };
 
     loadData();
-  }, [date]);
+  }, [dateString]);
 
   const updatePlan = (id: string, updates: Partial<Pick<Plan, 'startTime' | 'endTime'>>) => {
     setPlans((prev) =>
@@ -114,7 +119,7 @@ export const useTimelineData = (date: string) => {
     subjects,
     plans,
     executions,
-    dateEvent,
+    dateEvents,
     loading,
     error,
     updatePlan,

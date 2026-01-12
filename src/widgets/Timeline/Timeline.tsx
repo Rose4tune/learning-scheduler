@@ -4,10 +4,11 @@ import { Column } from './Column';
 import { useTimelineData } from '@/shared/hooks';
 
 interface TimelineProps {
-  date: string;
+  date: Date | string;
 }
 
 export const Timeline: React.FC<TimelineProps> = ({ date }) => {
+  const dateString = typeof date === 'string' ? date : date.toISOString().split('T')[0];
   const { plans, executions, loading, error, subjects, updatePlan, updateExecution } = useTimelineData(date);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pendingBlock, setPendingBlock] = useState<{
@@ -70,7 +71,7 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
           {/* Plan 컬럼 */}
           <Column
             type="plan"
-            date={date}
+            date={dateString}
             plans={plans}
             onCreateBlock={handleCreatePlan}
             onUpdateBlock={handleUpdatePlan}
@@ -79,7 +80,7 @@ export const Timeline: React.FC<TimelineProps> = ({ date }) => {
           {/* Execution 컬럼 */}
           <Column
             type="execution"
-            date={date}
+            date={dateString}
             executions={executions}
             onCreateBlock={handleCreateExecution}
             onUpdateBlock={handleUpdateExecution}
